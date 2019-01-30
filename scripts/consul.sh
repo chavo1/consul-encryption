@@ -49,15 +49,16 @@ sudo mkdir -p /etc/consul.d/ssl/
 
     pushd /etc/consul.d/ssl/
         consul tls ca create
-        consul tls cert create -server
-        consul tls cert create -cli
+        consul tls cert create -server -additional-dnsname="$HOST"
+        consul tls cert create -cli -additional-dnsname="$HOST"
     popd
 
 sudo cat <<EOF > /etc/consul.d/ssl/config.json
 {
-  "verify_incoming": false,
   "verify_outgoing": true,
   "verify_server_hostname": true,
+  "verify_incoming_https": false,
+  "verify_incoming_rpc": true, 
   "ca_file": "/etc/consul.d/ssl/consul-agent-ca.pem",
   "cert_file": "/etc/consul.d/ssl/dc1-server-consul-0.pem",
   "key_file": "/etc/consul.d/ssl/dc1-server-consul-0-key.pem",
@@ -71,11 +72,8 @@ EOF
 crypto=`consul keygen`
 
 sudo cat <<EOF > /etc/consul.d/ssl/encrypt.json
-{"encrypt": "iii"}
+{"encrypt": "${crypto}"}
 EOF
-
-sudo sed -i "s/iii/$crypto/g" /etc/consul.d/ssl/encrypt.json
-
 
     consul agent -server -ui -bind 0.0.0.0 -advertise $IPs -client 0.0.0.0 -data-dir=/tmp/consul \
 -bootstrap-expect=$SERVER_COUNT -config-dir=/etc/consul.d/ssl/ -retry-join=192.168.56.52 \
@@ -88,16 +86,17 @@ sudo mkdir -p /etc/consul.d/ssl/
 pushd /etc/consul.d/ssl/
     sshpass -p 'vagrant' scp -o StrictHostKeyChecking=no vagrant@192.168.56.51:"/etc/consul.d/ssl/consul-agent-ca*" /etc/consul.d/ssl/
     sshpass -p 'vagrant' scp -o StrictHostKeyChecking=no vagrant@192.168.56.51:"/etc/consul.d/ssl/encrypt.json" /etc/consul.d/ssl/
-    consul tls cert create -server
-    consul tls cert create -cli
+    consul tls cert create -server -additional-dnsname="$HOST"
+    consul tls cert create -cli -additional-dnsname="$HOST"
 popd
 
 
 sudo cat <<EOF > /etc/consul.d/ssl/config.json
 {
-  "verify_incoming": false,
   "verify_outgoing": true,
   "verify_server_hostname": true,
+  "verify_incoming_https": false,
+  "verify_incoming_rpc": true,
   "ca_file": "/etc/consul.d/ssl/consul-agent-ca.pem",
   "cert_file": "/etc/consul.d/ssl/dc1-server-consul-0.pem",
   "key_file": "/etc/consul.d/ssl/dc1-server-consul-0-key.pem",
@@ -119,16 +118,17 @@ sudo mkdir -p /etc/consul.d/ssl/
 pushd /etc/consul.d/ssl/
     sshpass -p 'vagrant' scp -o StrictHostKeyChecking=no vagrant@192.168.56.51:"/etc/consul.d/ssl/consul-agent-ca*" /etc/consul.d/ssl/
     sshpass -p 'vagrant' scp -o StrictHostKeyChecking=no vagrant@192.168.56.51:"/etc/consul.d/ssl/encrypt.json" /etc/consul.d/ssl/
-    consul tls cert create -client
-    consul tls cert create -cli
+    consul tls cert create -client -additional-dnsname="$HOST"
+    consul tls cert create -cli -additional-dnsname="$HOST"
 popd
 
 
 sudo cat <<EOF > /etc/consul.d/ssl/config.json
 {
-  "verify_incoming": false,
   "verify_outgoing": true,
   "verify_server_hostname": true,
+  "verify_incoming_https": false,
+  "verify_incoming_rpc": true,
   "ca_file": "/etc/consul.d/ssl/consul-agent-ca.pem",
   "cert_file": "/etc/consul.d/ssl/dc1-client-consul-0.pem",
   "key_file": "/etc/consul.d/ssl/dc1-client-consul-0-key.pem",
