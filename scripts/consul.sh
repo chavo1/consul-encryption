@@ -68,6 +68,15 @@ sudo cat <<EOF > /etc/consul.d/ssl/config.json
 }
 EOF
 
+crypto=`consul keygen`
+
+sudo cat <<EOF > /etc/consul.d/ssl/encrypt.json
+{"encrypt": "iii"}
+EOF
+
+sudo sed -i "s/iii/$crypto/g" /etc/consul.d/ssl/encrypt.json
+
+
     consul agent -server -ui -bind 0.0.0.0 -advertise $IPs -client 0.0.0.0 -data-dir=/tmp/consul \
 -bootstrap-expect=$SERVER_COUNT -config-dir=/etc/consul.d/ssl/ -retry-join=192.168.56.52 \
 -retry-join=192.168.56.51 > /vagrant/consul_logs/$HOST.log & 
@@ -78,6 +87,7 @@ sudo mkdir -p /etc/consul.d/ssl/
 
 pushd /etc/consul.d/ssl/
     sshpass -p 'vagrant' scp -o StrictHostKeyChecking=no vagrant@192.168.56.51:"/etc/consul.d/ssl/consul-agent-ca*" /etc/consul.d/ssl/
+    sshpass -p 'vagrant' scp -o StrictHostKeyChecking=no vagrant@192.168.56.51:"/etc/consul.d/ssl/encrypt.json" /etc/consul.d/ssl/
     consul tls cert create -server
     consul tls cert create -cli
 popd
@@ -108,6 +118,7 @@ sudo mkdir -p /etc/consul.d/ssl/
 
 pushd /etc/consul.d/ssl/
     sshpass -p 'vagrant' scp -o StrictHostKeyChecking=no vagrant@192.168.56.51:"/etc/consul.d/ssl/consul-agent-ca*" /etc/consul.d/ssl/
+    sshpass -p 'vagrant' scp -o StrictHostKeyChecking=no vagrant@192.168.56.51:"/etc/consul.d/ssl/encrypt.json" /etc/consul.d/ssl/
     consul tls cert create -client
     consul tls cert create -cli
 popd
